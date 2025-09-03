@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>عمر کیلکولیٹر</title>
+  <style>
+    :root{
+      --bg:#0f172a;           /* slate-900 */
+      --card:#111827;         /* gray-900 */
+      --muted:#94a3b8;        /* slate-400 */
+      --text:#e5e7eb;         /* gray-200 */
+      --accent:#22c55e;       /* green-500 */
+      --accent-2:#06b6d4;     /* cyan-500 */
+      --danger:#ef4444;       /* red-500 */
+      --border:#1f2937;       /* gray-800 */
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Nastaliq Urdu", "Noto Naskh Arabic", Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 80% -200px, #1e293b 0%, var(--bg) 50%, #0b1223 100%);
+      color:var(--text);
+      min-height:100vh; display:grid; place-items:center; padding:24px;
+    }
+    .app{
+      width:min(900px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border:1px solid var(--border);
+      border-radius:20px; padding:22px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      backdrop-filter: blur(6px);
+    }
+    h1{font-weight:800; letter-spacing:.3px; margin:0 0 6px; font-size:clamp(20px, 3.5vw, 32px)}
+    p.lead{margin:0 0 18px; color:var(--muted); font-size:14px}
+    .grid{display:grid; grid-template-columns:1fr; gap:14px}
+    @media (min-width:720px){ .grid{ grid-template-columns: 1fr 1fr; } }
+
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px }
+    label{ display:block; font-size:14px; color:var(--muted); margin-bottom:8px }
+    input[type="date"], input[type="text"]{
+      width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border);
+      background:#0b1324; color:var(--text); outline:none; font-size:15px
+    }
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px }
+    button{
+      cursor:pointer; border:none; border-radius:999px; padding:10px 16px; font-weight:700; font-size:14px;
+      color:#0b1324; background:var(--accent); box-shadow:0 6px 16px rgba(34,197,94,.25);
+    }
+    button.secondary{ background:#0b1324; color:var(--text); border:1px solid var(--border) }
+    button:active{ transform: translateY(1px) }
+
+    .error{ color:var(--danger); font-size:13px; margin-top:8px; display:none }
+    .ok{ color:var(--accent); font-size:13px; margin-top:8px; display:none }
+
+    .result{ display:grid; grid-template-columns: 1fr; gap:12px }
+    @media (min-width:720px){ .result{ grid-template-columns: repeat(3, 1fr) } }
+
+    .stat{
+      background:linear-gradient(180deg, rgba(6,182,212,.12), transparent);
+      border:1px dashed #1d2a38; border-radius:14px; padding:14px
+    }
+    .stat h3{ margin:0 0 6px; font-size:14px; color:var(--muted) }
+    .stat .num{ font-weight:900; font-size:clamp(18px, 4vw, 28px) }
+
+    .muted{ color:var(--muted); font-size:13px }
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px dashed var(--border) }
+    .row:last-child{ border-bottom:none }
+    .badge{ padding:4px 8px; border-radius:10px; background:#0b1324; border:1px solid var(--border); font-size:12px; color:var(--muted) }
+    footer{ margin-top:14px; color:var(--muted); font-size:12px; text-align:center }
+  </style>
+</head>
+<body>
+  <main class="app" aria-labelledby="title">
+    <h1 id="title">عمر کیلکولیٹر</h1>
+    <p class="lead">اپنی تاریخِ پیدائش منتخب کریں اور درست عمر معلوم کریں۔ یہ کیلکولیٹر سال، مہینے، دن، اگلی سالگرہ اور مزید بھی دکھاتا ہے۔</p>
+
+    <section class="grid" aria-label="Age Inputs and Output">
+      <div class="card" aria-label="Inputs">
+        <label for="dob">تاریخِ پیدائش</label>
+        <input id="dob" type="date" inputmode="numeric" />
+
+        <div class="actions">
+          <button id="calcBtn" type="button">عمر معلوم کریں</button>
+          <button id="todayBtn" class="secondary" type="button" title="آج کی تاریخ دوبارہ لوڈ کریں">آج</button>
+          <button id="resetBtn" class="secondary" type="button">ری سیٹ</button>
+        </div>
+
+        <div id="msgError" class="error" role="alert">براہِ کرم درست تاریخ منتخب کریں۔ تاریخِ پیدائش آج یا مستقبل کی نہیں ہونی چاہیے۔</div>
+        <div id="msgOk" class="ok" role="status">تاریخ درست ہے۔ نتیجہ نیچے ملاحظہ کریں۔</div>
+      </div>
+
+      <div class="card" aria-live="polite" aria-label="Quick Stats">
+        <div class="result" id="quick">
+          <div class="stat">
+            <h3>عمر (سال)</h3>
+            <div class="num" id="years">—</div>
+          </div>
+          <div class="stat">
+            <h3>مہینے</h3>
+            <div class="num" id="months">—</div>
+          </div>
+          <div class="stat">
+            <h3>دن</h3>
+            <div class="num" id="days">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Detailed Results" style="margin-top:14px">
+      <div class="row"><span class="muted">کل دن گزرے</span><span class="badge" id="totalDays">—</span></div>
+      <div class="row"><span class="muted">کل ہفتے گزرے</span><span class="badge" id="totalWeeks">—</span></div>
+      <div class="row"><span class="muted">کل مہینے گزرے</span><span class="badge" id="totalMonths">—</span></div>
+      <div class="row"><span class="muted">کل گھنٹے گزرے</span><span class="badge" id="totalHours">—</span></div>
+      <div class="row"><span class="muted">آئندہ سالگرہ تک باقی دن</span><span class="badge" id="toNextBday">—</span></div>
+      <div class="row"><span class="muted">اگلی سالگرہ کی تاریخ</span><span class="badge" id="nextBdayDate">—</span></div>
+    </section>
+
+    <footer>یہ کیلکولیٹر آپ کے مقامی وقت کے مطابق حساب لگاتا ہے۔</footer>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const dob = $("dob"), calcBtn = $("calcBtn"), resetBtn = $("resetBtn"), todayBtn = $("todayBtn");
+    const msgError = $("msgError"), msgOk = $("msgOk");
+
+    const out = {
+      years: $("years"), months: $("months"), days: $("days"),
+      totalDays: $("totalDays"), totalWeeks: $("totalWeeks"), totalMonths: $("totalMonths"), totalHours: $("totalHours"),
+      toNextBday: $("toNextBday"), nextBdayDate: $("nextBdayDate"),
+    };
+
+    // Helper: zero time for local day precision
+    function startOfDay(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
+    function isValidDateStr(v){ if(!v) return false; const d = new Date(v); return !Number.isNaN(d.getTime()); }
+
+    function daysInMonth(year, month /* 0-11 */){
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function formatDate(d){
+      // Urdu-friendly DD MMM YYYY using Intl
+      try{
+        return new Intl.DateTimeFormat('ur-PK', { day:'2-digit', month:'long', year:'numeric'}).format(d);
+      }catch(e){
+        return d.toLocaleDateString();
+      }
+    }
+
+    function calcAge(){
+      hideMessages();
+      const v = dob.value;
+      if(!isValidDateStr(v)) return showError();
+
+      const birth = startOfDay(new Date(v));
+      const today = startOfDay(new Date());
+
+      if(birth.getTime() >= today.getTime()) return showError();
+
+      // --- Years/Months/Days exact ---
+      let y = today.getFullYear() - birth.getFullYear();
+      let m = today.getMonth() - birth.getMonth();
+      let d = today.getDate() - birth.getDate();
+
+      if(d < 0){
+        m -= 1;
+        const prevMonth = (today.getMonth() - 1 + 12) % 12;
+        const prevYear = prevMonth === 11 ? today.getFullYear() - 1 : today.getFullYear();
+        d += daysInMonth(prevYear, prevMonth);
+      }
+      if(m < 0){
+        y -= 1;
+        m += 12;
+      }
+
+      out.years.textContent = y.toString();
+      out.months.textContent = m.toString();
+      out.days.textContent = d.toString();
+
+      // --- Totals ---
+      const ms = today.getTime() - birth.getTime();
+      const totalDays = Math.floor(ms / 86_400_000);
+      const totalWeeks = Math.floor(totalDays / 7);
+      const totalHours = Math.floor(ms / 3_600_000);
+      const totalMonths = y * 12 + m; // months completed (approx exact via Y/M)
+
+      out.totalDays.textContent = totalDays.toLocaleString('en-US');
+      out.totalWeeks.textContent = totalWeeks.toLocaleString('en-US');
+      out.totalMonths.textContent = totalMonths.toLocaleString('en-US');
+      out.totalHours.textContent = totalHours.toLocaleString('en-US');
+
+      // --- Next Birthday ---
+      const currentYear = today.getFullYear();
+      let next = new Date(currentYear, birth.getMonth(), birth.getDate());
+      // If birthday this year has passed or is today, move to next year
+      if(startOfDay(next).getTime() <= today.getTime()){
+        next = new Date(currentYear + 1, birth.getMonth(), birth.getDate());
+      }
+      // (JS auto-adjusts 29 Feb to 1 Mar in non-leap years)
+
+      const msToNext = startOfDay(next).getTime() - today.getTime();
+      const daysToNext = Math.round(msToNext / 86_400_000);
+
+      out.toNextBday.textContent = daysToNext.toString();
+      out.nextBdayDate.textContent = formatDate(next);
+
+      showOk();
+    }
+
+    function showError(){ msgError.style.display = 'block'; msgOk.style.display = 'none';
+      // Clear outputs for safety
+      for(const key in out){ out[key].textContent = '—'; }
+    }
+    function showOk(){ msgOk.style.display = 'block'; msgError.style.display = 'none'; }
+    function hideMessages(){ msgOk.style.display = 'none'; msgError.style.display = 'none'; }
+
+    // Events
+    calcBtn.addEventListener('click', calcAge);
+    dob.addEventListener('keyup', (e)=>{ if(e.key === 'Enter') calcAge(); });
+    resetBtn.addEventListener('click', ()=>{ dob.value=''; hideMessages(); for(const k in out){ out[k].textContent='—'; } });
+    todayBtn.addEventListener('click', ()=>{ hideMessages(); calcAge(); });
+
+    // Optional: Prefill example for first-time UX without saving any data
+    // Remove the next two lines if you don't want a demo date.
+    if(!dob.value) dob.value = new Date(Date.UTC(2000,0,1)).toISOString().slice(0,10);
+    calcAge();
+  </script>
+</body>
+</html>
